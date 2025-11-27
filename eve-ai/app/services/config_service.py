@@ -33,8 +33,10 @@ class ConfigService:
             session.add(config)
             session.commit()
             session.refresh(config)
+            print("-> Default config created")
         
         self._cache = config
+        print("-> Config loaded")
         return config
     
     def get_runtime_config(self) -> Config:
