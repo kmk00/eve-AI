@@ -16,3 +16,12 @@ dependencies = [
 dev = "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
 migrate = "alembic upgrade head"
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
