@@ -2,10 +2,11 @@ from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 # from app.core.config import settings
+from app.core.lifespan import lifespan
 from app.core.config import API_VERSION
 from app.api import chat, config, emotions, analytics, backup, characters, memory, upload
 
-app =FastAPI(title="EVE AI", version="1.0.0")
+app =FastAPI(title="EVE AI", version="1.0.0",lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
