@@ -1,8 +1,11 @@
-from typing import Dict, List
+from datetime import datetime, timezone
+from tracemalloc import start
+from typing import Dict, List, Optional, Tuple
 import time
 import json
 from ollama import ChatResponse, chat
-from app.models.schemas import Character, Config, Conversation, Message, User
+from sqlmodel import Session, desc, select
+from app.models.schemas import Character, Config, Conversation, Emotion, MemoryNote, Message, User
 from app.services.config_service import config_service
 
 
@@ -15,82 +18,130 @@ class AI_Service:
                 
     
 
-
-    def generate_response(self, messages: List[Dict], character: Character) -> tuple[str, str, float]:
+    def generate_response(self,message_text: str,conversation_id: int, session: Session) -> Tuple[Message,float]:
         """
-        Generate character response using GPU or OpenAI API
+        Generate character response with full context system
         
-        :param messages: List of messages, with role and content
-        :type messages: List[Dict[role: str, content: str]]
-        :param character: AI character to generate response
-        :type character: Character
-        :return: (response_text, emotion, generation_time_seconds)
-        :rtype: tuple[str,str,float]
-        """
-        system_prompt = f"""You are {character.name}, {character.description}.
-        Personality: {character.personality}
-        **IMPORTANT:** Always respond in valid JSON: {{"response": <response>, "emotion":"happy|sad|angry|neutral|talking|pouting|embarrassed"}}
-        Be concise, reply in user's language, maintain character consistency        
+        :param message_text: User's new message
+        :param conversation_id: ID of current conversation
+        :param session: SQLModel session for DB operations
+        :return: (Message object with AI response, generation_time_seconds)
         """
         
-        cfg = config_service.get_runtime_config()
+        # === PREPARE PROMPT ===
+        
+        conversation = session.get(Conversation,conversation_id)
+        if not conversation:
+            raise ValueError(f"Conversation with ID {conversation_id} not found")
+        
+        cfg = config_service.load_from_db(session)
+        character = conversation.character
+        user = conversation.user
+        
+        if character.id is None or user is None:
+            raise ValueError("Character or user not found")
+        
+        
+        #Download message history
+        recent_messages = session.exec(select(Message).where(Message.conversation_id == conversation_id).order_by(desc(Message.created_at)).limit(cfg.conversation_memory_length)).all()
+        recent_messages = list(reversed(recent_messages))
+        
+        #Download important memory notes
+        memory_notes = session.exec(select(MemoryNote).where(MemoryNote.conversation_id == conversation_id).order_by(desc(MemoryNote.importance_score)).limit(max(1, cfg.conversation_memory_length // 2))).all()
+        memory_notes = list(reversed(memory_notes))        
+        
+        #Build prompt
+        system_prompt = PromptBuilder.build_system_prompt(character,user,conversation,recent_messages,memory_notes,cfg.conversation_memory_length)
+        
+        # Prepare messages for LLM
+        model_messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add history messages
+        for msg in recent_messages:
+            model_messages.append({"role": msg.role, "content": msg.content})
+            
+        model_messages.append({"role": "user", "content": message_text})
+        
+        # ==== Generate response ====
+        
         start_time = time.time()
-        
+        ai_emotion: str = Emotion.NEUTRAL.value
+        memory_note_content: Optional[str] = None
+    
         try:
-            # Build messages with system prompt
-            system_msg = {"role": "system", "content": system_prompt}
-            all_messages = [system_msg] + messages
-            raw_content = None
-            
-            
             if cfg.mode == "local":
-                # Ollama local API
-                response: ChatResponse = chat(
-                    model=cfg.model_name,
-                    messages=all_messages,
-                    format="json",
-                    options={
-                        "temperature": cfg.temperature,
-                        "max_tokens": cfg.max_tokens,
-                        "gpu_layers": cfg.gpu_layers
-                    }
-                )
-                raw_content = response.message.content
+                response: ChatResponse = chat(model=cfg.model_name, messages=model_messages,format="json",options={"temperature": cfg.temperature,"max_tokens": cfg.max_tokens,"gpu_layers": cfg.gpu_layers})
                 
+                if not response.message or not response.message.content:
+                    raise ValueError("AI response is empty")
+                raw_response: str = response.message.content
+                
+                
+            elif cfg.mode == "remote":
+                # TODO: Implement remote mode
+                raise NotImplementedError("Remote mode not implemented yet")        
+            else:
+                raise ValueError(f"Invalid AI mode: {cfg.mode}")
+
+            result = json.loads(raw_response)
+            ai_response_text = result.get("response")
+            ai_emotion = result.get("emotion")
+            memory_note_content = result.get("memory_note")
             
-            if cfg.mode == "remote":
-                raise NotImplementedError
-            
-            if raw_content is None:
-                raise Exception("Failed to generate response")
-            
-            result = json.loads(raw_content)
-            response_text = result.get("response", "No response provided")
-            emotion = result.get("emotion", "neutral")
-            
-            generation_time = time.time() - start_time
-            return response_text, emotion, generation_time
             
         except json.JSONDecodeError:
-            # Fallback if LLM returns invalid JSON
-            generation_time = time.time() - start_time
-            return "I had trouble formatting my response correctly.", "neutral", generation_time
-            
+            ai_response_text = "I had trouble formatting my response correctly."
         except Exception as e:
-            # Handle API errors, network issues, etc.
-            generation_time = time.time() - start_time
-            return f"Error generating response: {str(e)}", "neutral", generation_time
+            print(f"Failed to generate response: {e}")
+            raise e
+        
+        #Save data to database
+        
+        generation_time = time.time() - start_time
+        # TODO AI EMOTION INTENSITY AND CONFIDENCE
+        user_msg = Message(conversation_id=conversation_id, role="user", content=message_text,generation_time_ms=int(generation_time*1000))
+        session.add(user_msg)
+        
+        ai_msg = Message(conversation_id=conversation_id, role="assistant",emotion=ai_emotion, content=ai_response_text,emotion_intensity=0.5,emotion_confidence=0.5,generation_time_ms=int(generation_time*1000))
+        session.add(ai_msg)
+        # TODO: Implement memory notes importance
+        if memory_note_content is not None:
+            memory_note = MemoryNote(conversation_id=conversation_id,character_id=character.id,importance_score=0.5, content=memory_note_content,source_message_id=ai_msg.id)
+            session.add(memory_note)
+            
+        conversation.message_count+=2
+        conversation.last_activity = datetime.now(timezone.utc)
+        character.last_interaction_at = datetime.now(timezone.utc)
+        session.commit()
+        
+        # PRINT EVERYTHING
+        print("=== AI RESPONSE ===")
+        print(f"User Message: {message_text}")
+        print(f"AI Response: {ai_response_text}")
+        print(f"AI Emotion: {ai_emotion}")
+        print(f"Memory Note: {memory_note_content}")
+        print(f"Generation Time: {generation_time} seconds")
+        
+        return ai_msg,generation_time
+
 
 
 class PromptBuilder:
     @staticmethod
-    def build_system_prompt(character: Character,user: User, conversation: Conversation, recent_messages: List[Message]) -> str:
+    def build_system_prompt(character: Character,user: User, conversation: Conversation, recent_messages: List[Message], memory_notes: List[MemoryNote],memory_length=5) -> str:
         
         emotions = ", ".join([f'"{e.value}"' for e in character.enabled_emotions])
         
         recent_summary = ""
         if recent_messages:
-            recent_summary = "\n".join([f"- {msg.role}: {msg.content[:100]}... (emotion: {msg.full_emotion})" for msg in recent_messages[-3:]])
+            recent_summary = "\n".join([f"- {msg.role}: {msg.content[:100]}... (emotion: {msg.full_emotion})" for msg in recent_messages[-memory_length:]])
+            
+        memory_context = ""
+        if memory_notes:
+            memory_context = "\n".join([
+                f"- {note.content} (importance: {note.importance_score:.2f})"
+                for note in memory_notes
+            ])
             
         phrases = ", ".join([f'"{p}"' for p in character.favorite_phrases])
         
@@ -134,6 +185,10 @@ Intensity: 0.0-0.3 = slightly_, 0.4-0.6 = "", 0.7-0.9 = very_, 1.0 = extremely_
 **CURRENT CONTEXT:**
 Recent events:
 {recent_summary or "No recent history"}
+
+Important memory notes:
+{memory_context or "No memory notes"}
+
 World state: {conversation.world_state or "Default state"}
 
 Now engage naturally."""
