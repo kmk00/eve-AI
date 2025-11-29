@@ -67,6 +67,7 @@ class AI_Service:
         start_time = time.time()
         ai_emotion: str = Emotion.NEUTRAL.value
         memory_note_content: Optional[str] = None
+        token_count: Optional[int] = None
     
         try:
             if cfg.mode == "local":
@@ -75,6 +76,8 @@ class AI_Service:
                 if not response.message or not response.message.content:
                     raise ValueError("AI response is empty")
                 raw_response: str = response.message.content
+                token_count = response.eval_count
+                
                 
                 
             elif cfg.mode == "remote":
@@ -88,7 +91,6 @@ class AI_Service:
             ai_emotion = result.get("emotion")
             memory_note_content = result.get("memory_note")
             
-            
         except json.JSONDecodeError:
             ai_response_text = "I had trouble formatting my response correctly."
         except Exception as e:
@@ -99,11 +101,12 @@ class AI_Service:
         
         generation_time = time.time() - start_time
         # TODO AI EMOTION INTENSITY AND CONFIDENCE
-        user_msg = Message(conversation_id=conversation_id, role="user", content=message_text,generation_time_ms=int(generation_time*1000))
+        user_msg = Message(conversation_id=conversation_id, role="user", content=message_text)
         session.add(user_msg)
         
-        ai_msg = Message(conversation_id=conversation_id, role="assistant",emotion=ai_emotion, content=ai_response_text,emotion_intensity=0.5,emotion_confidence=0.5,generation_time_ms=int(generation_time*1000))
+        ai_msg = Message(conversation_id=conversation_id, role="assistant",emotion=ai_emotion, content=ai_response_text,emotion_intensity=0.5,emotion_confidence=0.5,generation_time_ms=int(generation_time*1000),token_count=token_count)
         session.add(ai_msg)
+        session.flush()
         # TODO: Implement memory notes importance
         if memory_note_content is not None:
             memory_note = MemoryNote(conversation_id=conversation_id,character_id=character.id,importance_score=0.5, content=memory_note_content,source_message_id=ai_msg.id)
