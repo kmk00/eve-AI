@@ -123,20 +123,23 @@ class AI_Service:
             raise e
         
         # ==== SAVE RESPONSE =====
-        
         generation_time = time.time() - start_time
 
+        # Save user message
         user_msg = Message(conversation_id=conversation_id, role="user", content=message_text,emotion=user_emotion,emotion_confidence=user_emotion_confidence,emotion_intensity=user_emotion_intensity)
         session.add(user_msg)
         
+        # Save AI response
         ai_msg = Message(conversation_id=conversation_id, role="assistant",emotion=ai_emotion, content=ai_response_text,emotion_intensity=ai_emotion_intensity,emotion_confidence=ai_emotion_confidence,generation_time_ms=int(generation_time*1000),token_count=token_count)
         session.add(ai_msg)
         session.flush()
         
-        # TODO: Implement memory notes importance
+        # Save memory note
+        # TODO: Create better memory note logic for different emotions
         if memory_note_content is not None:
-            memory_note = MemoryNote(conversation_id=conversation_id,character_id=character.id,importance_score=0.5, content=memory_note_content,source_message_id=ai_msg.id)
-            session.add(memory_note)
+            if memory_note_importance > 0.85:
+                memory_note = MemoryNote(conversation_id=conversation_id,character_id=character.id,importance_score=memory_note_importance, content=memory_note_content,source_message_id=ai_msg.id)
+                session.add(memory_note)
             
         conversation.message_count+=2
         conversation.last_activity = datetime.now(timezone.utc)
@@ -149,7 +152,9 @@ class AI_Service:
         print(f"AI Response: {ai_response_text}")
         print(f"AI Emotion: {ai_emotion}")
         print(f"Memory Note: {memory_note_content}")
+        print(f"Memory Note Importance: {memory_note_importance}")
         print(f"Generation Time: {generation_time} seconds")
+        
         
         return ai_msg,generation_time
 
