@@ -302,7 +302,7 @@ class MemoryNote(SQLModel, table=True):
     
     importance_score: float = Field(ge=0.0, le=1.0)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    last_referenced: Optional[datetime] = None
+
     
     message: Optional["Message"] = Relationship(back_populates="memory_note")
     
