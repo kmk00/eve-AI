@@ -1,8 +1,8 @@
-"""refactor database
+"""init
 
-Revision ID: 6313b559ff56
+Revision ID: 6ce2d88f27b7
 Revises: 
-Create Date: 2025-11-28 16:23:29.394034
+Create Date: 2025-11-29 13:13:08.825070
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6313b559ff56'
+revision: str = '6ce2d88f27b7'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -125,7 +125,6 @@ def upgrade() -> None:
     sa.Column('source_message_id', sa.Integer(), nullable=True),
     sa.Column('importance_score', sa.Float(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('last_referenced', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['character_id'], ['character.id'], ),
     sa.ForeignKeyConstraint(['conversation_id'], ['conversation.id'], ),
     sa.ForeignKeyConstraint(['source_message_id'], ['message.id'], ),
