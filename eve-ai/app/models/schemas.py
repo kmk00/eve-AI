@@ -256,7 +256,6 @@ class Message(SQLModel, table=True):
     emotion_intensity: float = Field(default=0.5,ge=0.0,le=1.0)
     
     #Meta
-    ai_detected_emotion: Optional[str] = None
     generation_time_ms: Optional[int] = None
     token_count: Optional[int] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

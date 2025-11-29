@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 6ce2d88f27b7
+Revision ID: d764cbce7425
 Revises: 
-Create Date: 2025-11-29 13:13:08.825070
+Create Date: 2025-11-29 17:48:41.190277
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6ce2d88f27b7'
+revision: str = 'd764cbce7425'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -109,7 +109,6 @@ def upgrade() -> None:
     sa.Column('emotion', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('emotion_confidence', sa.Float(), nullable=True),
     sa.Column('emotion_intensity', sa.Float(), nullable=False),
-    sa.Column('ai_detected_emotion', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('generation_time_ms', sa.Integer(), nullable=True),
     sa.Column('token_count', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
