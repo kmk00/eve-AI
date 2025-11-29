@@ -68,6 +68,16 @@ class AI_Service:
         ai_emotion: str = Emotion.NEUTRAL.value
         memory_note_content: Optional[str] = None
         token_count: Optional[int] = None
+        
+        ai_emotion: str = Emotion.NEUTRAL.value
+        ai_emotion_confidence: float = 0.5
+        ai_emotion_intensity: float = 0.5
+        user_emotion: Optional[str] = None
+        user_emotion_confidence: float = 0.0  # Domyślna pewność
+        user_emotion_intensity: float = 0.5
+        memory_note_content: Optional[str] = None
+        memory_note_importance: float = 0.5
+        token_count: Optional[int] = None
     
         try:
             if cfg.mode == "local":
@@ -75,10 +85,9 @@ class AI_Service:
                 
                 if not response.message or not response.message.content:
                     raise ValueError("AI response is empty")
+                
                 raw_response: str = response.message.content
                 token_count = response.eval_count
-                
-                
                 
             elif cfg.mode == "remote":
                 # TODO: Implement remote mode
@@ -87,9 +96,25 @@ class AI_Service:
                 raise ValueError(f"Invalid AI mode: {cfg.mode}")
 
             result = json.loads(raw_response)
+            print("======\nAI response: \n======", result)
             ai_response_text = result.get("response")
+            
             ai_emotion = result.get("emotion")
+            ai_emotion_confidence = result.get("ai_emotion_confidence", 0.5)
+            ai_emotion_intensity = result.get("ai_emotion_intensity", 0.5)
+            
+            user_emotion = result.get("user_emotion")
+            user_emotion_confidence = result.get("user_emotion_confidence", 0.5)
+            user_emotion_intensity = result.get("user_emotion_intensity", 0.5)
+            
             memory_note_content = result.get("memory_note")
+            memory_note_importance = result.get("memory_note_importance", 0.5)
+            
+            if ai_emotion_confidence < cfg.emotion_confidence_threshold:
+                ai_emotion = Emotion.NEUTRAL.value
+            
+            if ai_emotion not in [e.value for e in character.enabled_emotions]:
+                ai_emotion = character.default_emotion
             
         except json.JSONDecodeError:
             ai_response_text = "I had trouble formatting my response correctly."
@@ -97,16 +122,17 @@ class AI_Service:
             print(f"Failed to generate response: {e}")
             raise e
         
-        #Save data to database
+        # ==== SAVE RESPONSE =====
         
         generation_time = time.time() - start_time
-        # TODO AI EMOTION INTENSITY AND CONFIDENCE
-        user_msg = Message(conversation_id=conversation_id, role="user", content=message_text)
+
+        user_msg = Message(conversation_id=conversation_id, role="user", content=message_text,emotion=user_emotion,emotion_confidence=user_emotion_confidence,emotion_intensity=user_emotion_intensity)
         session.add(user_msg)
         
-        ai_msg = Message(conversation_id=conversation_id, role="assistant",emotion=ai_emotion, content=ai_response_text,emotion_intensity=0.5,emotion_confidence=0.5,generation_time_ms=int(generation_time*1000),token_count=token_count)
+        ai_msg = Message(conversation_id=conversation_id, role="assistant",emotion=ai_emotion, content=ai_response_text,emotion_intensity=ai_emotion_intensity,emotion_confidence=ai_emotion_confidence,generation_time_ms=int(generation_time*1000),token_count=token_count)
         session.add(ai_msg)
         session.flush()
+        
         # TODO: Implement memory notes importance
         if memory_note_content is not None:
             memory_note = MemoryNote(conversation_id=conversation_id,character_id=character.id,importance_score=0.5, content=memory_note_content,source_message_id=ai_msg.id)
@@ -174,15 +200,24 @@ class PromptBuilder:
 6. NEVER break character, mention AI, or use meta-language
 7. If unsure: improvise within character logic, ask for clarification in-character
 
-**EMOTION SYSTEM:**
+**AI EMOTION SYSTEM:**
 Choose EXACTLY ONE emotion from: {emotions}
+Intensity: 0.0-0.3 = slightly_, 0.4-0.6 = "", 0.7-0.9 = very_, 1.0 = extremely_
+**USER EMOTION SYSTEM:**
+Try to detect EXACTLY ONE emotion from: {emotions}
 Intensity: 0.0-0.3 = slightly_, 0.4-0.6 = "", 0.7-0.9 = very_, 1.0 = extremely_
 
 **OUTPUT FORMAT (STRICT JSON):**
 {{
   "response": "your in-character reply here",
-  "emotion": "exact_emotion_from_list",
-  "memory_note": "key info to remember about this turn (optional)"
+  "ai_emotion": "exact_emotion_from_list",
+  "ai_emotion_intensity": 0.0-1.0,
+  "ai_emotion_confidence": 0.0-1.0,
+  "user_emotion": "detected_user_emotion",
+  "user_emotion_confidence": 0.0-1.0,
+  "user_emotion_intensity": 0.0-1.0,
+  "memory_note": "key info to remember about this turn (optional)",
+  "memory_note_importance": 0.0-1.0
 }}
 
 **CURRENT CONTEXT:**
