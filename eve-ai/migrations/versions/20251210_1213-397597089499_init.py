@@ -1,18 +1,18 @@
 """init
 
-Revision ID: 1e314b50335b
+Revision ID: 397597089499
 Revises: 
-Create Date: 2025-11-26 21:32:59.003122
+Create Date: 2025-12-10 12:13:06.075858
 
 """
 from typing import Sequence, Union
-
+import sqlmodel
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel
+
 
 # revision identifiers, used by Alembic.
-revision: str = '1e314b50335b'
+revision: str = '397597089499'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,11 +27,21 @@ def upgrade() -> None:
     sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('personality', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('avatar', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('vrm_path', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('role_in_world', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('world_context', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('speech_pattern', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('favorite_phrases_json', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('sentence_length_preference', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('response_length_default', sa.Integer(), nullable=True),
+    sa.Column('ask_questions_frequency', sa.Float(), nullable=False),
+    sa.Column('emoticons_frequency', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('memory_retention_preference', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('default_emotion', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('enabled_emotions_json', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('voice_id', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('speech_rate', sa.Float(), nullable=True),
     sa.Column('pitch', sa.Float(), nullable=True),
-    sa.Column('default_emotion', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('enabled_emotions', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_default', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
@@ -41,8 +51,6 @@ def upgrade() -> None:
     )
     op.create_index('idx_character_active', 'character', ['is_active'], unique=False)
     op.create_index('idx_character_default', 'character', ['is_default'], unique=False)
-    op.create_index(op.f('ix_character_is_active'), 'character', ['is_active'], unique=False)
-    op.create_index(op.f('ix_character_is_default'), 'character', ['is_default'], unique=False)
     op.create_index(op.f('ix_character_name'), 'character', ['name'], unique=True)
     op.create_table('config',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -60,26 +68,24 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('idx_config_mode', 'config', ['id'], unique=False)
-    op.create_table('vrmmodelcache',
+    op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('file_path', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('file_hash', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('file_size', sa.Integer(), nullable=False),
-    sa.Column('vrm_version', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('thumbnail_path', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('blendshape_count', sa.Integer(), nullable=False),
-    sa.Column('blendshape_names', sqlmodel.sql.sqltypes.AutoString(length=2000), nullable=False),
-    sa.Column('load_time_ms', sa.Integer(), nullable=False),
-    sa.Column('last_used', sa.DateTime(), nullable=False),
-    sa.Column('use_count', sa.Integer(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('gender', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('age', sa.Integer(), nullable=True),
+    sa.Column('profile_json', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
     )
-    op.create_index('idx_cache_usage', 'vrmmodelcache', ['last_used'], unique=False)
-    op.create_index(op.f('ix_vrmmodelcache_file_hash'), 'vrmmodelcache', ['file_hash'], unique=True)
-    op.create_index(op.f('ix_vrmmodelcache_file_path'), 'vrmmodelcache', ['file_path'], unique=True)
     op.create_table('conversation',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('character_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('relationship_type', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('user_intent', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('world_state', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('title', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('message_count', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
@@ -87,26 +93,13 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.Column('last_activity', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['character_id'], ['character.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('idx_conversation_activity', 'conversation', ['last_activity', 'character_id'], unique=False)
     op.create_index(op.f('ix_conversation_character_id'), 'conversation', ['character_id'], unique=False)
     op.create_index(op.f('ix_conversation_is_active'), 'conversation', ['is_active'], unique=False)
-    op.create_table('emotionkeyword',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('character_id', sa.Integer(), nullable=False),
-    sa.Column('emotion', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=False),
-    sa.Column('keyword', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
-    sa.Column('weight', sa.Float(), nullable=False),
-    sa.Column('language', sqlmodel.sql.sqltypes.AutoString(length=10), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['character_id'], ['character.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('idx_keyword_lookup', 'emotionkeyword', ['character_id', 'keyword', 'language'], unique=False)
-    op.create_index(op.f('ix_emotionkeyword_character_id'), 'emotionkeyword', ['character_id'], unique=False)
-    op.create_index(op.f('ix_emotionkeyword_emotion'), 'emotionkeyword', ['emotion'], unique=False)
-    op.create_index(op.f('ix_emotionkeyword_keyword'), 'emotionkeyword', ['keyword'], unique=False)
+    op.create_index(op.f('ix_conversation_user_id'), 'conversation', ['user_id'], unique=False)
     op.create_table('message',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('conversation_id', sa.Integer(), nullable=False),
@@ -115,62 +108,51 @@ def upgrade() -> None:
     sa.Column('language', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('emotion', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('emotion_confidence', sa.Float(), nullable=True),
-    sa.Column('ai_detected_emotion', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('emotion_intensity', sa.Float(), nullable=False),
     sa.Column('generation_time_ms', sa.Integer(), nullable=True),
     sa.Column('token_count', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['conversation_id'], ['conversation.id'], ),
+    sa.ForeignKeyConstraint(['conversation_id'], ['conversation.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('emotionlog',
+    op.create_index(op.f('ix_message_emotion'), 'message', ['emotion'], unique=False)
+    op.create_table('memorynote',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('character_id', sa.Integer(), nullable=False),
     sa.Column('conversation_id', sa.Integer(), nullable=False),
-    sa.Column('message_id', sa.Integer(), nullable=False),
-    sa.Column('emotion', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=False),
-    sa.Column('confidence', sa.Float(), nullable=False),
-    sa.Column('trigger_source', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=False),
-    sa.Column('timestamp', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['conversation_id'], ['conversation.id'], ),
-    sa.ForeignKeyConstraint(['message_id'], ['message.id'], ),
+    sa.Column('content', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=False),
+    sa.Column('source_message_id', sa.Integer(), nullable=True),
+    sa.Column('importance_score', sa.Float(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['character_id'], ['character.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['conversation_id'], ['conversation.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['source_message_id'], ['message.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('idx_emotion_timeseries', 'emotionlog', ['timestamp', 'emotion'], unique=False)
-    op.create_index(op.f('ix_emotionlog_conversation_id'), 'emotionlog', ['conversation_id'], unique=False)
-    op.create_index(op.f('ix_emotionlog_emotion'), 'emotionlog', ['emotion'], unique=False)
-    op.create_index(op.f('ix_emotionlog_message_id'), 'emotionlog', ['message_id'], unique=False)
-    op.create_index(op.f('ix_emotionlog_timestamp'), 'emotionlog', ['timestamp'], unique=False)
+    op.create_index('idx_memory_importance', 'memorynote', ['character_id', 'importance_score'], unique=False)
+    op.create_index(op.f('ix_memorynote_character_id'), 'memorynote', ['character_id'], unique=False)
+    op.create_index(op.f('ix_memorynote_conversation_id'), 'memorynote', ['conversation_id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f('ix_emotionlog_timestamp'), table_name='emotionlog')
-    op.drop_index(op.f('ix_emotionlog_message_id'), table_name='emotionlog')
-    op.drop_index(op.f('ix_emotionlog_emotion'), table_name='emotionlog')
-    op.drop_index(op.f('ix_emotionlog_conversation_id'), table_name='emotionlog')
-    op.drop_index('idx_emotion_timeseries', table_name='emotionlog')
-    op.drop_table('emotionlog')
+    op.drop_index(op.f('ix_memorynote_conversation_id'), table_name='memorynote')
+    op.drop_index(op.f('ix_memorynote_character_id'), table_name='memorynote')
+    op.drop_index('idx_memory_importance', table_name='memorynote')
+    op.drop_table('memorynote')
+    op.drop_index(op.f('ix_message_emotion'), table_name='message')
     op.drop_table('message')
-    op.drop_index(op.f('ix_emotionkeyword_keyword'), table_name='emotionkeyword')
-    op.drop_index(op.f('ix_emotionkeyword_emotion'), table_name='emotionkeyword')
-    op.drop_index(op.f('ix_emotionkeyword_character_id'), table_name='emotionkeyword')
-    op.drop_index('idx_keyword_lookup', table_name='emotionkeyword')
-    op.drop_table('emotionkeyword')
+    op.drop_index(op.f('ix_conversation_user_id'), table_name='conversation')
     op.drop_index(op.f('ix_conversation_is_active'), table_name='conversation')
     op.drop_index(op.f('ix_conversation_character_id'), table_name='conversation')
     op.drop_index('idx_conversation_activity', table_name='conversation')
     op.drop_table('conversation')
-    op.drop_index(op.f('ix_vrmmodelcache_file_path'), table_name='vrmmodelcache')
-    op.drop_index(op.f('ix_vrmmodelcache_file_hash'), table_name='vrmmodelcache')
-    op.drop_index('idx_cache_usage', table_name='vrmmodelcache')
-    op.drop_table('vrmmodelcache')
+    op.drop_table('user')
     op.drop_index('idx_config_mode', table_name='config')
     op.drop_table('config')
     op.drop_index(op.f('ix_character_name'), table_name='character')
-    op.drop_index(op.f('ix_character_is_default'), table_name='character')
-    op.drop_index(op.f('ix_character_is_active'), table_name='character')
     op.drop_index('idx_character_default', table_name='character')
     op.drop_index('idx_character_active', table_name='character')
     op.drop_table('character')
