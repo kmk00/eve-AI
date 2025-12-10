@@ -56,7 +56,7 @@ async def get_chat_history(
     conversation_id: int = Path(..., description="Conversation ID"),
     limit: int = Query(50, ge=1, le=200, description="Number of messages to return"),
     offset: int = Query(0, ge=0, description="Number of messages to skip"),
-    sort_desc: bool = Query(False, description="Sort messages in descending order"),
+    sort_desc: bool = Query(False, description="Sort messages in descending order, default is ascending"),
     session: Session = Depends(get_session)
 ):
     """
