@@ -231,8 +231,8 @@ class Conversation(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_activity: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    memory_notes: List["MemoryNote"] = Relationship(back_populates="conversation")
-    messages: List["Message"] = Relationship(back_populates="conversation")
+    memory_notes: List["MemoryNote"] = Relationship(back_populates="conversation",sa_relationship_kwargs={"cascade":"all, delete-orphan"})
+    messages: List["Message"] = Relationship(back_populates="conversation",sa_relationship_kwargs={"cascade":"all, delete-orphan"})
 
     @property
     def last_interactions_summary(self, max_messages=5):
@@ -244,7 +244,7 @@ class Conversation(SQLModel, table=True):
 class Message(SQLModel, table=True):
     """Single message table"""
     id: Optional[int] = Field(default=None, primary_key=True)
-    conversation_id: int = Field(foreign_key="conversation.id")
+    conversation_id: int = Field(foreign_key="conversation.id",ondelete="CASCADE")
     conversation: Conversation = Relationship(back_populates="messages")
     role: str = Field(max_length=20)
     content: str = Field(max_length=20000)
@@ -292,8 +292,8 @@ class Message(SQLModel, table=True):
 class MemoryNote(SQLModel, table=True):
     """Important memory to be referenced later"""
     id: Optional[int] = Field(default=None, primary_key=True)
-    character_id: int = Field(foreign_key="character.id", index=True)
-    conversation_id: int = Field(foreign_key="conversation.id", index=True)
+    character_id: int = Field(foreign_key="character.id", ondelete="CASCADE", index=True)
+    conversation_id: int = Field(foreign_key="conversation.id", ondelete="CASCADE", index=True)
     conversation: Conversation = Relationship(back_populates="memory_notes")
     
     content: str = Field(max_length=500)

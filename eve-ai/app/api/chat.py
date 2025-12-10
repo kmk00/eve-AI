@@ -44,8 +44,7 @@ def get_valid_conversation(
             status_code=404, detail="Conversation not found"
         )
     
-    if conversation.character_id != character_id:
-         raise HTTPException(status_code=404, detail="Conversation does not belong to this character")
+    if conversation.character_id != character_id: raise HTTPException(status_code=404, detail="Conversation does not belong to this character")
         
     return conversation
 
@@ -82,3 +81,25 @@ async def get_chat_history(
         "offset": offset,
         "messages": messages
     }
+    
+    
+@router.delete("/{character_id}/{conversation_id}", status_code=204)
+async def delete_conversation(
+    character_id: int = Path(..., description="ID postaci"),
+    conversation_id: int = Path(..., description="ID konwersacji do usunięcia"),
+    session: Session = Depends(get_session)
+):
+    """
+    Deletes a conversation
+    """
+    conversation = get_valid_conversation(character_id, conversation_id, session)
+
+    try:
+        session.delete(conversation)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print(f"Failed to delete conversation {conversation_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete conversation due to database error.")
+
+    return None
