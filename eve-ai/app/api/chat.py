@@ -59,8 +59,8 @@ ai_service=AI_Service()
 @router.post("/{character_id}/{conversation_id}",response_model=MessageResponse)
 async def send_message(
     message_data: MessageCreateRequest,
-    character_id: int = Path(..., description="ID postaci"),
-    conversation_id: int = Path(..., description="ID konwersacji, do której wysyłamy"),
+    character_id: int = Path(..., description="Character ID"),
+    conversation_id: int = Path(..., description="Conversation ID"),
     session: Session = Depends(get_session)
 ):
     """
@@ -81,14 +81,11 @@ async def send_message(
         return ai_message_model
 
     except ValueError as ve:
-        # Obsługa błędów logiki biznesowej (np. pusta odpowiedź z LLM, błędne ID w serwisie)
         print(f"Business logic error in generate_response: {ve}")
-        # Zwracamy 400 Bad Request dla błędów walidacji logicznej
         raise HTTPException(status_code=400, detail=str(ve))
+    
     except Exception as e:
-        # Obsługa nieoczekiwanych błędów (np. awaria bazy danych, awaria API Ollama)
         print(f"Critical error in send_message endpoint: {e}")
-        # W produkcji nie pokazujemy surowego błędu klientowi
         raise HTTPException(status_code=500, detail="Internal server error during message generation.")
 
 @router.get("/{character_id}/{conversation_id}/messages",response_model=PaginatedHistoryResponse)
