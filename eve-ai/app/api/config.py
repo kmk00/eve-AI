@@ -50,3 +50,95 @@ async def get_config(session: Session=Depends(get_session)):
     return config
 
 
+@router.patch(f"",response_model=ConfigResponse)
+def update_config(
+    update_data: ConfigUpdateRequest,
+    session: Session = Depends(get_session)
+):
+    """
+    Update config in database
+    
+    At least one property must be provided in the request body.
+    
+    Args:
+        mode: str
+        model_name: str
+        gpu_layers: int
+        temperature: float
+        max_tokens: int
+        openai_api_key: Optional[str]
+        anthropic_api_key: Optional[str]
+        conversation_memory_length: int
+        emotion_confidence_threshold: float
+    """
+    # Walidacja, że nie jest pusty request
+    if not any(value is not None for value in update_data.model_dump().values()):
+        raise HTTPException(
+            status_code=400,
+            detail="At least one field must be provided for update"
+        )
+    
+    config = session.get(Config, 1)
+    
+    if not config:
+        raise HTTPException(
+            status_code=404,
+            detail="Configuration not found"
+        )
+    
+    # Aktualizujemy tylko podane pola
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(config, key, value)
+    
+    config.updated_at = datetime.now(timezone.utc)
+    
+    try:
+        session.commit()
+        session.refresh(config)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update configuration: {str(e)}"
+        )
+    
+    return config   
+
+
+
+@router.post(f"",response_model=ConfigResponse)
+def reset_config(
+    session: Session = Depends(get_session)
+):
+    """
+    Reset config in database
+    """
+    config = session.get(Config, 1)
+    
+    if not config:
+        raise HTTPException(
+            status_code=404,
+            detail="Configuration not found"
+        )
+        
+    config.mode = AIMode.LOCAL
+    config.model_name = "gemma3:latest"
+    config.gpu_layers = 60
+    config.temperature = 0.7
+    config.max_tokens = 4096
+    config.conversation_memory_length = 10
+    config.emotion_confidence_threshold = 0.6
+    config.updated_at = datetime.now(timezone.utc)    
+    
+    try:
+        session.commit()
+        session.refresh(config)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to reset configuration: {str(e)}"
+        )
+    
+    return config
