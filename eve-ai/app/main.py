@@ -20,9 +20,9 @@ app.add_middleware(
 # HTTP
 app.include_router(analytics.router, prefix=f"/api/{API_VERSION}/analytics", tags=["analytics"])
 app.include_router(config.router,   prefix=f"/api/{API_VERSION}/config",   tags=["config"])
+app.include_router(chat.router,     prefix=f"/api/{API_VERSION}/chat",     tags=["chat"])
 
 # app.include_router(config.router,   prefix=f"/api/{API_VERSION}/config",   tags=["config"])
-# app.include_router(chat.router,     prefix=f"/api/{API_VERSION}/chat",     tags=["chat"])
 # app.include_router(emotions.router, prefix=f"/api/{API_VERSION}/emotions", tags=["emotions"])
 # app.include_router(backup.router,   prefix=f"/api/{API_VERSION}/backup",   tags=["backup"])
 # app.include_router(characters.router, prefix=f"/api/{API_VERSION}/characters", tags=["characters"])
