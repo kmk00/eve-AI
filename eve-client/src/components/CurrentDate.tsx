@@ -4,7 +4,6 @@ const CurrentDate = () => {
   const [date, setDate] = useState(new Date());
 
   useEffect(() => {
-    // Aktualizuj datę co minutę (aby obsłużyć zmianę dnia bez odświeżania strony)
     const timer = setInterval(() => setDate(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
