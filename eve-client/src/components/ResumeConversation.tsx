@@ -3,7 +3,7 @@ const ResumeConversation = () => {
   const ai_image = "/character_image.png";
 
   return (
-    <div className="group relative xl:w-120 md:w-100 md:h-100 w-80 h-80 xl:h-120  rounded-full">
+    <div className="xl:-mt-14 group relative xl:w-120 md:w-100 md:h-100 w-80 h-80 xl:h-120 rounded-full">
       <button
         onClick={() => {}}
         className="xl:w-120 md:w-100 md:h-100 w-80 h-80 rounded-full xl:h-120  relative"
