@@ -26,7 +26,7 @@ button {
 }
 
 body {
-  @apply m-0 h-screen min-h-screen;
+  @apply m-0  min-h-screen;
   background-image: url(bg.svg);
   background-position: center;
   background-repeat: no-repeat;

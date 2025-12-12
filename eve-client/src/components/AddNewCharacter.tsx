@@ -4,7 +4,7 @@ const AddNewCharacter = () => {
   return (
     <button
       onClick={() => {}}
-      className="absolute bottom-28 left-6 md:bottom-14 md:left-10 xl:bottom-28 xl:left-14"
+      className="xl:absolute bottom-28 left-6 md:bottom-14 md:left-10 xl:bottom-28 xl:left-14"
     >
       <div className="relative">
         {/* TEXT */}
