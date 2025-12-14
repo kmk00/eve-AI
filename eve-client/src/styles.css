@@ -38,3 +38,51 @@ code {
   font-family:
     source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
+
+.text-vertical {
+  writing-mode: vertical-lr;
+}
+
+.text-stroke-3 {
+  text-shadow:
+    -1px -1px 0 #f0f8fa,
+    1px -1px 0 #f0f8fa,
+    -1px 1px 0 #f0f8fa,
+    1px 1px 0 #f0f8fa;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.cyber-scrollbar::-webkit-scrollbar {
+  width: 14px;
+}
+
+.cyber-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.cyber-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    #ffffff 0%,
+    #ffffff 15%,
+    #020617 15%,
+    #020617 100%
+  );
+  border-radius: 1px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.cyber-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #04233b transparent;
+}
