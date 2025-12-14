@@ -39,7 +39,7 @@ code {
     source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
-.text-vertical {
+@utility text-vertical {
   writing-mode: vertical-lr;
 }
 

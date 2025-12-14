@@ -4,7 +4,7 @@ import CharacterElement from "./CharacterElement";
 
 const CharactersList = () => {
   return (
-    <div className="flex flex-col gap-16 py-20 px-20 max-h-screen overflow-y-auto cyber-scrollbar pr-4">
+    <div className="flex flex-col gap-16 py-20 pr-20 xl:max-h-screen overflow-y-auto cyber-scrollbar ">
       {Array.from({ length: 10 }).map((_, index) => (
         <CharacterElement
           index={index}
