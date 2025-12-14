@@ -51,6 +51,14 @@ code {
     1px 1px 0 #f0f8fa;
 }
 
+.text-stroke-dark {
+  text-shadow:
+    -2px -2px 0 #04233b,
+    2px -2px 0 #04233b,
+    -2px 2px 0 #04233b,
+    2px 2px 0 #04233b;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -85,4 +93,13 @@ code {
 .cyber-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #04233b transparent;
+}
+
+.trapezoid {
+  --p: 10px;
+  height: 80px;
+  aspect-ratio: 3/2;
+  clip-path: polygon(var(--p) 0, calc(100% - var(--p)) 0, 100% 100%, 0 100%);
+  background: #04233b;
+  rotate: -3deg;
 }
