@@ -13,28 +13,9 @@ const CharacterElement = ({
   messagesNumber,
   lastMessageDate,
   avatar,
-  index,
 }: CharacterElementProps) => {
-  const margin = () => {
-    switch (index % 6) {
-      case 0:
-        return "20px";
-      case 1:
-        return "40px";
-      case 2:
-        return "60px";
-      case 3:
-        return "40px";
-      case 4:
-        return "20px";
-    }
-  };
-
   return (
-    <div
-      style={{ marginLeft: margin() }}
-      className={`bg-secondary-dark text-primary w-120 p-1`}
-    >
+    <div className={`bg-secondary-dark text-primary w-full xl:w-120 p-1`}>
       <div className="flex justify-between">
         <div className="w-36 h-20 relative">
           <img

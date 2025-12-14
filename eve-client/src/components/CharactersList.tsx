@@ -1,10 +1,8 @@
 import CharacterElement from "./CharacterElement";
-// Ensure you import your CSS file here if it's not global
-// import "./scrollbar.css";
 
 const CharactersList = () => {
   return (
-    <div className="flex flex-col gap-16 py-20 pr-20 xl:max-h-screen overflow-y-auto cyber-scrollbar ">
+    <div className="flex flex-col gap-16 py-20 xl:pr-20 pr-4 sm:w-2/3 w-full xl:w-fit xl:max-h-screen m-auto mt-14 xl:mt-4 max-h-[50vh] overflow-y-auto overflow-x-hidden cyber-scrollbar md">
       {Array.from({ length: 10 }).map((_, index) => (
         <CharacterElement
           index={index}

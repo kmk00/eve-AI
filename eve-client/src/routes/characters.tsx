@@ -31,12 +31,12 @@ function RouteComponent() {
           </div>
           <div className="flex flex-col justify-end gap-4">
             <div className="flex ml-auto">
-              <p className="xl:text-vertical  text-6xl 2xl:text-[5rem] text-secondary-dark text-left">
+              <p className="xl:text-vertical text-6xl 2xl:text-[5rem] text-secondary-dark text-left">
                 {name}
               </p>
               <div className="xl:block hidden w-60 h-100 2xl:w-80 2xl:h-120 bg-red-400"></div>
             </div>
-            <p className="text-6xl 2xl:text-8xl text-primary ml-auto mt-12 xl:mt-2 text-right max-w-md 2xl:max-w-2xl">
+            <p className="text-6xl 2xl:text-8xl text-primary ml-auto  xl:mt-2 text-right max-w-md 2xl:max-w-2xl">
               {desc}
             </p>
           </div>
@@ -49,7 +49,7 @@ function RouteComponent() {
           </div>
         </div>
       </div>
-      <div className="absolute xl:bottom-4 xl:right-4 bottom-0 right-0 pb-8 z-50">
+      <div className="xl:block hidden absolute xl:bottom-4 xl:right-4 bottom-0 right-0 pb-8 z-50">
         <div className="relative">
           <img
             src="/settings.svg"
