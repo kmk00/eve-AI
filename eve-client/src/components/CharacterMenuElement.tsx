@@ -1,9 +1,13 @@
 interface CharacterMenuElementProps {
+  id: number;
   name: string;
+  avatar: string;
 }
 
 const CharacterMenuElement = ({
-  name = "Character",
+  name,
+  avatar,
+  id,
 }: CharacterMenuElementProps) => {
   const clipPath = () => {
     const randomShape = Math.floor(Math.random() * 4) + 1;
@@ -33,8 +37,11 @@ const CharacterMenuElement = ({
       >
         {name}
       </p>
-      <div className="-skew-x-12 shadow-[-10px_10px_0px_-2px_#04233b] hover:shadow-[-10px_10px_0px_-2px_#0caff7] transform duration-200 overflow-hidden w-40 h-40 transform-gpu">
-        <div className="w-full h-full skew-x-12 scale-125 bg-[url('/model2.png')] bg-center bg-cover bg-no-repeat"></div>
+      <div
+        style={{ backgroundImage: `url(${avatar})` }}
+        className="-skew-x-12 shadow-[-10px_10px_0px_-2px_#04233b] hover:shadow-[-10px_10px_0px_-2px_#0caff7] transform duration-200 overflow-hidden w-40 h-40 transform-gpu"
+      >
+        <div className="w-full h-full skew-x-12 scale-125  bg-center bg-cover bg-no-repeat"></div>
       </div>
     </button>
   );
