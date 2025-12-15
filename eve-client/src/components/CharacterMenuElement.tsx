@@ -9,6 +9,7 @@ const CharacterMenuElement = ({
   avatar,
   id,
 }: CharacterMenuElementProps) => {
+  // TODO: Change image
   const clipPath = () => {
     const randomShape = Math.floor(Math.random() * 4) + 1;
 
