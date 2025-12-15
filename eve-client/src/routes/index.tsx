@@ -23,22 +23,52 @@ async function getCharacters(limit: number): Promise<Character[]> {
   return res.json();
 }
 
+async function getDefaultCharacter(): Promise<Character> {
+  const url = new URL("http://127.0.0.1:8000/api/v1/characters/default");
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch default character");
+  }
+
+  return res.json();
+}
+
 const charactersQueryOptions = {
   queryKey: ["characters"],
   queryFn: () => getCharacters(3),
 };
 
+const defaultCharacterQueryOptions = {
+  queryKey: ["defaultCharacter"],
+  queryFn: () => getDefaultCharacter(),
+};
+
 export const Route = createFileRoute("/")({
   component: App,
   loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(charactersQueryOptions),
+    Promise.all([
+      queryClient.ensureQueryData(charactersQueryOptions),
+      queryClient.ensureQueryData(defaultCharacterQueryOptions),
+    ]),
 });
 
 function App() {
   const charactersQuery = useSuspenseQuery(charactersQueryOptions);
+  const defaultCharacterQuery = useSuspenseQuery(defaultCharacterQueryOptions);
   const characters = charactersQuery.data;
+  const defaultCharacter = defaultCharacterQuery.data;
 
   console.log(characters);
+
+  if (!characters || !defaultCharacter) {
+    return <div>Loading...</div>;
+  }
+
+  console.log(defaultCharacter);
 
   return (
     <>
@@ -46,7 +76,11 @@ function App() {
         <CurrentDate />
         <ConfigSettings />
         <div className="flex flex-col gap-12 items-center justify-center">
-          <ResumeConversation />
+          <ResumeConversation
+            ai_name={defaultCharacter.name}
+            ai_image={defaultCharacter.avatar}
+            ai_model={defaultCharacter.vrm_path}
+          />
           <div className="xl:hidden block">
             <CharacterListButton />
           </div>

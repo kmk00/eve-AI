@@ -1,7 +1,14 @@
-const ResumeConversation = () => {
-  const ai_name = "EVE";
-  const ai_image = "/character_image.png";
+interface ResumeConversationProps {
+  ai_name: string;
+  ai_image: string;
+  ai_model: string;
+}
 
+const ResumeConversation = ({
+  ai_name,
+  ai_image,
+  ai_model,
+}: ResumeConversationProps) => {
   return (
     <div className="xl:-mt-14 group relative xl:w-120 md:w-100 md:h-100 w-80 h-80 xl:h-120 2xl:w-150 2xl:h-150 rounded-full">
       <button

@@ -72,3 +72,13 @@ async def get_characters(
         
     characters = session.exec(statement).all()
     return characters
+
+@router.get("/default", response_model=CharacterResponse)
+async def get_default_character(session: Session = Depends(get_session)):
+    
+    statement = select(Character).where(Character.is_default == True)
+    character = session.exec(statement).one_or_none()
+    
+    if character is None:
+        raise HTTPException(status_code=404, detail="Character not found")
+    return character
