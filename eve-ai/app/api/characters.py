@@ -1,9 +1,9 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, ConfigDict
-from sqlmodel import Session, select
+from sqlmodel import Session, desc, select
 from app.models.database import get_session
-from app.models.schemas import Character
+from app.models.schemas import Character, Conversation
 router = APIRouter()
 
 class FetchCharactersRequest(BaseModel):
@@ -82,3 +82,30 @@ async def get_default_character(session: Session = Depends(get_session)):
     if character is None:
         raise HTTPException(status_code=404, detail="Character not found")
     return character
+
+
+@router.get("/{character_id}", response_model=CharacterResponse)
+async def get_character(character_id: int, session: Session = Depends(get_session)):
+    statement = select(Character).where(Character.id == character_id)
+    character = session.exec(statement).one_or_none()
+    
+    if character is None:
+        raise HTTPException(status_code=404, detail="Character not found")
+    return character
+
+@router.get("/{character_id}/conversations_list", response_model=List[Conversation])
+async def get_conversations_list(
+    character_id: int = Path(..., description="Character ID"),
+    session: Session = Depends(get_session)
+):
+    """
+    Returns a list of conversations for a character, ordered by last activity (newest first).
+    """
+    query = (
+        select(Conversation)
+        .where(Conversation.character_id == character_id)
+        .order_by(desc(Conversation.last_activity))
+    )
+    
+    conversations = session.exec(query).all()
+    return conversations

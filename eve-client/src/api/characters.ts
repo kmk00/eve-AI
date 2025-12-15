@@ -29,4 +29,18 @@ async function getCharacters(limit?: number): Promise<Character[]> {
   return res.json();
 }
 
-export { getDefaultCharacter, getCharacters };
+async function getSpecificCharacter(id: number): Promise<Character> {
+  const url = new URL(`${import.meta.env.VITE_API_URL}/characters/${id}`);
+
+  const res = await fetch(url.toString(), {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch character");
+  }
+
+  return res.json();
+}
+
+export { getDefaultCharacter, getCharacters, getSpecificCharacter };
