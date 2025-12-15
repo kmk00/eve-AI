@@ -33,8 +33,6 @@ function App() {
   const characters = charactersQuery.data;
   const defaultCharacter = defaultCharacterQuery.data;
 
-  console.log(characters);
-
   if (!characters || !defaultCharacter) {
     return <div>Loading...</div>;
   }

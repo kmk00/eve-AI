@@ -14,9 +14,9 @@ async function getDefaultCharacter(): Promise<Character> {
   return res.json();
 }
 
-async function getCharacters(limit: number): Promise<Character[]> {
+async function getCharacters(limit?: number): Promise<Character[]> {
   const url = new URL(`${import.meta.env.VITE_API_URL}/characters`);
-  url.searchParams.append("limit", limit.toString());
+  if (limit) url.searchParams.append("limit", limit.toString());
 
   const res = await fetch(url.toString(), {
     method: "GET",
