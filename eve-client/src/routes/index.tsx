@@ -1,41 +1,12 @@
+import { getCharacters, getDefaultCharacter } from "@/api/characters";
 import AddNewCharacter from "@/components/AddNewCharacter";
 import CharacterListButton from "@/components/CharacterListButton";
 import CharacterMenuElement from "@/components/CharacterMenuElement";
 import ConfigSettings from "@/components/ConfigSettings";
 import CurrentDate from "@/components/CurrentDate";
 import ResumeConversation from "@/components/ResumeConversation";
-import type { Character } from "@/types";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-
-async function getCharacters(limit: number): Promise<Character[]> {
-  const url = new URL("http://127.0.0.1:8000/api/v1/characters");
-  url.searchParams.append("limit", limit.toString());
-
-  const res = await fetch(url.toString(), {
-    method: "GET",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch characters");
-  }
-
-  return res.json();
-}
-
-async function getDefaultCharacter(): Promise<Character> {
-  const url = new URL("http://127.0.0.1:8000/api/v1/characters/default");
-
-  const res = await fetch(url.toString(), {
-    method: "GET",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch default character");
-  }
-
-  return res.json();
-}
 
 const charactersQueryOptions = {
   queryKey: ["characters"],
