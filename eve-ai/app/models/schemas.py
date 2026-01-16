@@ -121,6 +121,7 @@ class Character(SQLModel, table=True):
     description: str = Field(default="")
     personality: str = Field(default="")
     avatar: str = Field(default="")
+    model_image: Optional[str] = Field(default="")
     vrm_path: str = Field(default="")
     
     # World settings

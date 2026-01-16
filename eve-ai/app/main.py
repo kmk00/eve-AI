@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 # from app.core.config import settings
 from app.core.lifespan import lifespan
 from app.core.config import API_VERSION
-from app.api import chat, config, analytics
+from app.api import chat, config, analytics, characters
 from fastapi.routing import APIRoute
+
 
 app = FastAPI(title="EVE AI", version="1.0.0",lifespan=lifespan)
 
@@ -19,6 +20,7 @@ app.add_middleware(
 app.include_router(analytics.router, prefix=f"/api/{API_VERSION}/analytics", tags=["analytics"])
 app.include_router(config.router,   prefix=f"/api/{API_VERSION}/config",   tags=["config"])
 app.include_router(chat.router,     prefix=f"/api/{API_VERSION}/chat",     tags=["chat"])
+app.include_router(characters.router,prefix=f"/api/{API_VERSION}/characters",tags=["characters"])
 
 print("\n" + "="*60)
 print(f"{'METHOD':<10} {'PATH':<40} {'NAME'}")
