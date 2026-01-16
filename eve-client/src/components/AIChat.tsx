@@ -9,6 +9,19 @@ const AIChat = ({ characterId }: AIChatProps) => {
   const [currentConversation, setCurrentConversation] =
     useState<Conversation | null>(null);
 
+  /* 
+    !TODO
+
+    Pobranie ostatniej konwersacji
+    Ostawienie ostatniej konwersacji jako aktualnej w select
+    Pobranie wiadomości do aktualnej konwersacji
+    Wyswietlenie wiadomości
+
+
+
+
+    */
+
   return (
     <div className="bg-secondary-light w-full h-full pb-8 bg-cover bg-center relative after:bg-[url('/chat-bg.svg')] after:bg-cover after:bg-center after:bg-no-repeat after:w-full after:h-full after:z-10 overflow-x-hidden overflow-hidden telative">
       <div className="relative z-10 text-4xl flex justify-center items-center mt-4">
